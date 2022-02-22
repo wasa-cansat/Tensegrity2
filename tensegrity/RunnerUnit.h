@@ -2,11 +2,11 @@
 
 #include <math.h>
 #include <Arduino.h>
-#include <painlessMesh.h>
 #include <Wire.h>
 
 #include "SwitchArray.h"
 #include "Indicator.h"
+#include "Comm.h"
 
 
 // EEPROM
@@ -25,6 +25,7 @@ extern uint8_t number;
 
 extern Indicator indicator;
 extern Scheduler scheduler;
+extern MeshComm mesh;
 
 extern float T;
 

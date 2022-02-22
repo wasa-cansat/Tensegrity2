@@ -24,11 +24,6 @@
 // Sensor
 #define CUTOFF_FREQ 1
 
-// Mesh
-#define MESH_PREFIX   "tensegrity"
-#define MESH_PASSWORD "tensegrity"
-#define MESH_PORT     5555
-
 // Task
 #define READ_SENSOR_FREQ      100
 #define UPDATE_INDICATOR_FREQ 100
@@ -42,11 +37,12 @@ SwitchArray switches = SwitchArray(SWITCH_PIN, 4);
 Indicator indicator = Indicator(LED_PIN);
 
 Scheduler scheduler;
-painlessMesh mesh;
+MeshComm mesh('T');
 
 float T = 0;
 
 State state = StartUp;
+
 
 int target   = 0;
 int position = 0;
@@ -80,12 +76,6 @@ void commSerial();
 Task taskCommSerial(TASK_SECOND / COMM_SERIIAL_FREQ,
                       TASK_FOREVER, &commSerial);
 
-void receivedCallback(uint32_t from, String &msg);
-void newConnectionCallback(uint32_t nodeId);
-void changedConnectionCallback();
-void nodeTimeAdjustedCallback(int32_t offset);
-
-
 
 void runner_init() {
 
@@ -113,12 +103,7 @@ void runner_init() {
     pinMode(VOLTAGE_PIN, ANALOG);
     pinMode(CURRENT_PIN, ANALOG);
 
-    mesh.setDebugMsgTypes(ERROR | MESH_STATUS | CONNECTION | SYNC | COMMUNICATION | GENERAL | MSG_TYPES | REMOTE);
-    mesh.init(MESH_PREFIX, MESH_PASSWORD, &scheduler, MESH_PORT);
-    mesh.onReceive(&receivedCallback);
-    mesh.onNewConnection(&newConnectionCallback);
-    mesh.onChangedConnections(&changedConnectionCallback);
-    mesh.onNodeTimeAdjusted(&nodeTimeAdjustedCallback);
+    mesh.init(&scheduler);
 
     scheduler.addTask(taskUpdateTimer);
     scheduler.addTask(taskUpdateState);
@@ -259,23 +244,6 @@ void runner_reset() {
     Serial.print("Resetting\n");
     state = StartUp;
 }
-
-void receivedCallback( uint32_t from, String &msg) {
-    Serial.printf("startHere: Received from %u msg=%s\n", from, msg.c_str());
-}
-
-void newConnectionCallback(uint32_t nodeId) {
-    Serial.printf("--> startHere: New Connection, nodeId = %u\n", nodeId);
-}
-
-void changedConnectionCallback() {
-    Serial.print("Changed connections\n");
-}
-
-void nodeTimeAdjustedCallback(int32_t offset) {
-    Serial.printf("Adjusted time %u. Offset = %d\n", mesh.getNodeTime(),offset);
-}
-
 
 
 void i2c_scanner() {
