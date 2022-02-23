@@ -46,9 +46,9 @@ State state = StartUp;
 
 int target   = 0;
 int position = 0;
-float speed = 0;
-float accel = 1.0;
-float speed_max = 0.8;
+float motor_speed = 0;
+float motor_accel = 1.0;
+float motor_speed_max = 0.8;
 
 float battery_voltage = 0;
 float motor_current   = 0;
@@ -149,14 +149,14 @@ void updateState() {
         else                               target = 0;
 
         if (target == 1 && position != 1)
-            speed = min(speed + accel * dt, speed_max);
+            motor_speed = min(motor_speed + motor_accel * dt, motor_speed_max);
         else if (target == -1 && position != -1)
-            speed = max(speed - accel * dt, - speed_max);
+            motor_speed = max(motor_speed - motor_accel * dt, - motor_speed_max);
         else if (target == 0 && position == 0){
-            if      (speed > 0) speed = max(speed - accel * dt, 0.0f);
-            else if (speed < 0) speed = min(speed + accel * dt, 0.0f);
+            if      (motor_speed > 0) motor_speed = max(motor_speed - motor_accel * dt, 0.0f);
+            else if (motor_speed < 0) motor_speed = min(motor_speed + motor_accel * dt, 0.0f);
         }
-        else speed = 0;
+        else motor_speed = 0;
 
 
         break;
@@ -166,8 +166,8 @@ void updateState() {
 void controlMotor() {
     unsigned motorDutyA = 0;
     unsigned motorDutyB = 0;
-    if      (speed > 0) motorDutyA =   speed * PWM_DUTY_MAX;
-    else if (speed < 0) motorDutyB = - speed * PWM_DUTY_MAX;
+    if      (motor_speed > 0) motorDutyA =   motor_speed * PWM_DUTY_MAX;
+    else if (motor_speed < 0) motorDutyB = - motor_speed * PWM_DUTY_MAX;
 
     ledcWrite(MOTOR_A_CH, motorDutyA);
     ledcWrite(MOTOR_B_CH, motorDutyB);
