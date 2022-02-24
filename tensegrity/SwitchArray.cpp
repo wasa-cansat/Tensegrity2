@@ -1,5 +1,7 @@
 #include "SwitchArray.h"
 
+#include <EEPROM.h>
+
 void SwitchArray::init() {
     pinMode(pin, ANALOG);
     analogSetPinAttenuation(pin, ADC_6db);

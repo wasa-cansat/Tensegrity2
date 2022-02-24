@@ -1,12 +1,8 @@
 #pragma once
 
-/* #include <Arduino_LSM9DS1.h> */
-#include <Adafruit_LSM9DS1.h>
-#include <LPS.h>
-#include <TinyGPS++.h>
-
-
-#include "LinearAlgebra.h"
-#include "RunnerUnit.h"
+extern bool mag_calibrating;
 
 void nav_init();
+
+void startCalibration();
+void finishCalibration();

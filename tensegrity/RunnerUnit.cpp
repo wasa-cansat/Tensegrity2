@@ -1,5 +1,11 @@
 #include "RunnerUnit.h"
 
+#include <math.h>
+#include <Arduino.h>
+#include <Wire.h>
+#include <EEPROM.h>
+
+
 // Pin assigns
 #define LED_PIN 2
 #define SWITCH_PIN 34
@@ -29,7 +35,7 @@
 #define UPDATE_INDICATOR_FREQ 100
 #define CONTROL_MOTOR_FREQ    100
 #define UPDATE_STATE_FREQ     10
-#define COMM_SERIIAL_FREQ     1
+#define COMM_SERIIAL_FREQ 1
 
 uint8_t number = 0;
 
@@ -54,28 +60,26 @@ float battery_voltage = 0;
 float motor_current   = 0;
 
 void updateTimer();
-Task taskUpdateTimer(1, TASK_FOREVER, &updateTimer);
+Task taskUpdateTimer(1, TASK_FOREVER, &updateTimer, &scheduler);
 
 void updateState();
 Task taskUpdateState(TASK_SECOND / UPDATE_STATE_FREQ,
-                     TASK_FOREVER, &updateState);
+                     TASK_FOREVER, &updateState, &scheduler);
 
 void readSensors();
 Task taskReadSensors(TASK_SECOND / READ_SENSOR_FREQ,
-                     TASK_FOREVER, &readSensors);
+                     TASK_FOREVER, &readSensors, &scheduler);
 
 void updateIndicator();
 Task taskUpdateIndicator(TASK_SECOND / UPDATE_INDICATOR_FREQ,
-                         TASK_FOREVER, &updateIndicator);
+                         TASK_FOREVER, &updateIndicator, &scheduler);
 
 void controlMotor();
 Task taskControlMotor(TASK_SECOND / CONTROL_MOTOR_FREQ,
-                      TASK_FOREVER, &controlMotor);
+                      TASK_FOREVER, &controlMotor, &scheduler);
 
-void commSerial();
 Task taskCommSerial(TASK_SECOND / COMM_SERIIAL_FREQ,
-                      TASK_FOREVER, &commSerial);
-
+                    TASK_FOREVER, &commSerial, &scheduler);
 
 void runner_init() {
 
@@ -105,12 +109,6 @@ void runner_init() {
 
     mesh.init(&scheduler);
 
-    scheduler.addTask(taskUpdateTimer);
-    scheduler.addTask(taskUpdateState);
-    scheduler.addTask(taskReadSensors);
-    scheduler.addTask(taskUpdateIndicator);
-    scheduler.addTask(taskControlMotor);
-    scheduler.addTask(taskCommSerial);
     taskUpdateTimer.enable();
     taskUpdateState.enable();
     taskReadSensors.enable();
@@ -151,10 +149,12 @@ void updateState() {
         if (target == 1 && position != 1)
             motor_speed = min(motor_speed + motor_accel * dt, motor_speed_max);
         else if (target == -1 && position != -1)
-            motor_speed = max(motor_speed - motor_accel * dt, - motor_speed_max);
+            motor_speed = max(motor_speed - motor_accel * dt, -motor_speed_max);
         else if (target == 0 && position == 0){
-            if      (motor_speed > 0) motor_speed = max(motor_speed - motor_accel * dt, 0.0f);
-            else if (motor_speed < 0) motor_speed = min(motor_speed + motor_accel * dt, 0.0f);
+            if (motor_speed > 0)
+                motor_speed = max(motor_speed - motor_accel * dt, 0.0f);
+            else if (motor_speed < 0)
+                motor_speed = min(motor_speed + motor_accel * dt, 0.0f);
         }
         else motor_speed = 0;
 
@@ -209,30 +209,6 @@ void updateIndicator() {
     indicator.moving   = target;
 
     indicator.update();
-}
-
-void commSerial() {
-    char buf[128];
-    sprintf(buf, "V: %f, C: %f", battery_voltage, motor_current);
-    Serial.println(buf);
-
-    if (Serial.available() > 0) {
-        switch (Serial.read()) {
-        case 'n': {
-            Serial.print("Set number: ");
-            int n = Serial.parseInt();
-            Serial.println(n);
-            EEPROM.put<uint8_t>(NUMBER_ADDR, n);
-            EEPROM.commit();
-            runner_reset();
-        }
-            break;
-        case 's':
-            switches.record();
-            switches.store_ruler(SWITCH_ADDR);
-            break;
-        }
-    }
 }
 
 void runner_loop() {

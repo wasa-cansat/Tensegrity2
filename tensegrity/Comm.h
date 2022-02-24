@@ -52,6 +52,7 @@ public:
     /* } */
 
 
+    bool receive(String &str);
 
 private:
     void listen(uint8_t type,
@@ -62,8 +63,6 @@ private:
     /*             void (*callback)(uint8_t index, const byte* payload)); */
 
 protected:
-    bool receive(String &str);
-
     virtual void writeLine(char* str) = 0;
 };
 

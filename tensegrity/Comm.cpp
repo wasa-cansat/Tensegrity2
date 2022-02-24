@@ -102,7 +102,8 @@ bool MeshComm::init(Scheduler *scheduler) {
     }
     meshComm = this;
 
-    mesh.setDebugMsgTypes(ERROR | MESH_STATUS | CONNECTION | SYNC | COMMUNICATION | GENERAL | MSG_TYPES | REMOTE);
+    // mesh.setDebugMsgTypes(ERROR | MESH_STATUS | CONNECTION | SYNC | COMMUNICATION | GENERAL | MSG_TYPES | REMOTE);
+    mesh.setDebugMsgTypes(ERROR | STARTUP | MESH_STATUS | CONNECTION | SYNC | GENERAL | MSG_TYPES | REMOTE);
     mesh.init(MESH_PREFIX, MESH_PASSWORD, scheduler, MESH_PORT);
     mesh.onReceive(&receivedCallback);
     mesh.onNewConnection(&newConnectionCallback);
@@ -123,6 +124,7 @@ void MeshComm::writeLine(char* str) {
 
 
 void receivedCallback( uint32_t from, String &msg) {
+    meshComm->receive(msg);
     Serial.printf("startHere: Received from %u msg=%s\n", from, msg.c_str());
 }
 
